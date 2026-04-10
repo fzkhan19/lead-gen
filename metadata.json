@@ -1,0 +1,9 @@
+{
+  "name": "Lead-Generator",
+  "description": "Faiz's autonomous SDR and Closer. Finds prospects, generates mockups, and handles outreach.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

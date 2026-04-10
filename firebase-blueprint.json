@@ -1,0 +1,83 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "A potential business client discovered through prospecting.",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "city": { "type": "string" },
+        "niche": { "type": "string" },
+        "status": { 
+          "type": "string",
+          "enum": ["prospect", "qualified", "mockup_ready", "processing_campaign", "outreach_sent", "replied", "closed"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "last_outreach_attempt": { "type": "string", "format": "date-time" },
+        "outreachSentAt": { "type": "string", "format": "date-time" },
+        "generatedHtml": { "type": "string" },
+        "designArchetype": { "type": "string" },
+        "offerPrice": { "type": "number" },
+        "subscriptionPrice": { "type": "number" },
+        "mockupDescription": { "type": "string" },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string", "enum": ["user", "lead"] },
+              "content": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "sentiment": { "type": "string" }
+            }
+          }
+        },
+        "osintData": {
+          "type": "object",
+          "properties": {
+            "socialMedia": {
+              "type": "object",
+              "properties": {
+                "facebook": { "type": "string" },
+                "instagram": { "type": "string" },
+                "linkedin": { "type": "string" },
+                "twitter": { "type": "string" },
+                "youtube": { "type": "string" }
+              }
+            },
+            "contactInfo": {
+              "type": "object",
+              "properties": {
+                "emails": { "type": "array", "items": { "type": "string" } },
+                "phones": { "type": "array", "items": { "type": "string" } },
+                "ownerName": { "type": "string" }
+              }
+            },
+            "businessDetails": {
+              "type": "object",
+              "properties": {
+                "website": { "type": "string" },
+                "yearFounded": { "type": "string" },
+                "employeeCount": { "type": "string" },
+                "rating": { "type": "number" },
+                "reviewCount": { "type": "number" }
+              }
+            },
+            "summary": { "type": "string" }
+          }
+        },
+        "uid": { "type": "string" }
+      },
+      "required": ["businessName", "city", "niche", "status", "createdAt", "uid"]
+    }
+  },
+  "firestore": {
+    "leads/{leadId}": {
+      "schema": { "$ref": "Lead" },
+      "description": "Collection of leads discovered and managed by users."
+    }
+  }
+}
