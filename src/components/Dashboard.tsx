@@ -433,17 +433,17 @@ export default function Dashboard() {
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.2 }}
-                              key={i} 
+                              key={lead.id || `lead-${i}`} 
                               className="space-y-2"
                             >
                               <div className="flex items-center gap-3 text-brand-400">
                                 <span className="opacity-50">[{new Date().toLocaleTimeString()}]</span>
                                 <span className="text-brand-400 font-bold">Target Identified:</span>
-                                <span className="text-white">{lead.companyName}</span>
+                                <span className="text-white">{lead.businessName}</span>
                               </div>
                               <div className="flex items-center gap-3 pl-8 text-brand-700">
                                 <ArrowUpRight className="w-3 h-3" />
-                                <span className="truncate max-w-md">{lead.url}</span>
+                                <span className="truncate max-w-md">{lead.website || 'No website'}</span>
                               </div>
                               <div className="flex items-center gap-3 pl-8 text-brand-400/70">
                                 <CheckCircle className="w-3 h-3" />
@@ -464,7 +464,7 @@ export default function Dashboard() {
 
                   {workflowStep === 'OSINT Dashboard' && (
                     <div className="space-y-6">
-                      <h4 className="text-xs font-mono text-brand-400 uppercase tracking-widest">Intelligence Report: {workflowData?.enrichedLeads?.[0]?.companyName}</h4>
+                      <h4 className="text-xs font-mono text-brand-400 uppercase tracking-widest">Intelligence Report: {workflowData?.enrichedLeads?.[0]?.businessName}</h4>
                       <div className="p-6 bg-brand-950/50 border border-brand-500/20 rounded-2xl font-mono text-xs text-brand-300 leading-relaxed max-h-[350px] overflow-y-auto custom-scrollbar">
                         {workflowData?.enrichedLeads?.[0]?.osint}
                       </div>
@@ -489,13 +489,14 @@ export default function Dashboard() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.1 }}
-                            key={lead.companyName} 
+                            key={lead.id || `campaign-${i}`} 
                             className="p-6 bg-white/[0.02] border border-white/[0.05] rounded-2xl flex items-center justify-between"
                           >
                             <div>
-                              <p className="text-white font-bold">{lead.companyName}</p>
+                              <p className="text-white font-bold">{lead.businessName}</p>
                               <p className="text-[10px] text-brand-600 font-mono uppercase mt-1">{lead.niche}</p>
                             </div>
+
                             <div className="flex items-center gap-3">
                               <span className="text-[10px] font-bold text-brand-400 bg-brand-500/10 px-3 py-1 rounded-full border border-brand-500/20">
                                 {lead.outreachSent ? 'OUTREACH SENT' : 'FAILED'}

@@ -9,9 +9,11 @@ import { GoogleGenAI } from '@google/genai';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure Nodemailer
+// Configure Nodemailer for Lark Mail
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.larksuite.com',
+  port: 465,
+  secure: true, // Use SSL
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_APP_PASSWORD,
@@ -113,10 +115,56 @@ async function startServer() {
         html: bodyHtml || `<p>Hi ${businessName} team,</p><p>We would love to help you build a new website.</p><p>Best,<br>LeadGen.ai Team</p>`,
       });
       console.log(`[OUTREACH] Email sent to ${email} for ${businessName}`);
-      res.json({ success: true, message: 'Outreach sent via Gmail' });
+      res.json({ success: true, message: 'Outreach sent via Lark Mail' });
     } catch (error) {
       console.error(`[OUTREACH ERROR] ${error}`);
-      res.status(500).json({ error: 'Failed to send email' });
+      const errStr = String(error);
+      if (errStr.includes('535') || errStr.toLowerCase().includes('authentication failed')) {
+        res.status(500).json({ 
+          error: 'SMTP Authentication Failed (535)', 
+          details: 'Lark Mail requires a "Third-Party Client/App-Specific Password" (Exclusive Password). Standard login passwords are not permitted. Please generate one in Lark Mail settings.' 
+        });
+      } else {
+        res.status(500).json({ error: 'Failed to send email', details: errStr });
+      }
+    }
+  });
+
+  // API Route for Test Email
+  app.post('/api/send-test-email', async (req, res) => {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+      return res.status(500).json({ error: 'Email credentials not configured' });
+    }
+
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: process.env.EMAIL_USER, // Send to self
+        subject: 'LeadGen.ai - Test Email Connection',
+        text: 'This is a test email from your LeadGen.ai platform using Lark Mail. If you received this, your email configuration is working correctly!',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #000;">Connection Successful!</h2>
+            <p>This is a test email from your <strong>LeadGen.ai</strong> platform using Lark Mail.</p>
+            <p>If you received this, your SMTP configuration is working correctly and you are ready to launch campaigns.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+            <p style="font-size: 12px; color: #666;">Sent at: ${new Date().toLocaleString()}</p>
+          </div>
+        `,
+      });
+      console.log(`[TEST EMAIL] Sent to ${process.env.EMAIL_USER}`);
+      res.json({ success: true, message: 'Test email sent successfully to your inbox.' });
+    } catch (error) {
+      console.error(`[TEST EMAIL ERROR] ${error}`);
+      const errStr = String(error);
+      if (errStr.includes('535') || errStr.toLowerCase().includes('authentication failed')) {
+        res.status(500).json({ 
+          error: 'SMTP Authentication Failed (535)', 
+          details: 'Lark Mail requires a "Third-Party Client/App-Specific Password" (Exclusive Password). Standard login passwords are not permitted. Please generate one in Lark Mail settings.' 
+        });
+      } else {
+        res.status(500).json({ error: 'Failed to send test email', details: errStr });
+      }
     }
   });
 

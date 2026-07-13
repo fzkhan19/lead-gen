@@ -11,7 +11,8 @@ import {
   X,
   Zap,
   Globe,
-  Send
+  Send,
+  Presentation
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, db } from './firebase';
@@ -28,8 +29,10 @@ import LeadAutomation from './components/LeadAutomation';
 import WebsitesTracker from './components/WebsitesTracker';
 import OutreachTracker from './components/OutreachTracker';
 import Inbox from './components/Inbox';
+import SettingsComponent from './components/Settings';
+import PitchDeck from './components/PitchDeck';
 
-type Tab = 'dashboard' | 'prospector' | 'leads' | 'websites' | 'outreach' | 'inbox' | 'analyze';
+type Tab = 'dashboard' | 'prospector' | 'leads' | 'websites' | 'outreach' | 'inbox' | 'analyze' | 'deck' | 'settings';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -116,6 +119,7 @@ export default function App() {
     { id: 'outreach', label: 'Outreach', icon: Send },
     { id: 'inbox', label: 'Negotiations', icon: MessageSquare },
     { id: 'analyze', label: 'Analyze', icon: ImageIcon },
+    { id: 'deck', label: 'Deck & Report', icon: Presentation },
   ];
 
   return (
@@ -188,9 +192,27 @@ export default function App() {
         </nav>
 
         <div className="p-4 border-t border-white/[0.02] space-y-2">
-          <button className="btn-ghost w-full flex items-center gap-4 px-4 py-3.5 text-brand-500 hover:text-brand-300 group">
-            <Settings className="w-5 h-5 group-hover:rotate-45 transition-transform duration-500" />
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={cn(
+              "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 group relative",
+              activeTab === 'settings' 
+                ? "bg-white/[0.03] text-white shadow-sm" 
+                : "text-brand-500 hover:text-brand-300 hover:bg-white/[0.01]"
+            )}
+          >
+            <Settings className={cn(
+              "w-5 h-5 transition-all duration-300 group-hover:rotate-45",
+              activeTab === 'settings' ? "text-white scale-110" : ""
+            )} />
             {isSidebarOpen && <span className="font-medium text-sm tracking-tight">Settings</span>}
+            {activeTab === 'settings' && (
+              <motion.div 
+                layoutId="active-pill"
+                className="absolute left-0 w-1 h-5 bg-white rounded-r-full"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
           </button>
           <button 
             onClick={handleLogout}
@@ -256,6 +278,8 @@ export default function App() {
               {activeTab === 'outreach' && <OutreachTracker />}
               {activeTab === 'inbox' && <Inbox />}
               {activeTab === 'analyze' && <ImageAnalyzer />}
+              {activeTab === 'deck' && <PitchDeck />}
+              {activeTab === 'settings' && <SettingsComponent />}
             </motion.div>
           </AnimatePresence>
           <LeadAutomation />
