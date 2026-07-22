@@ -1,0 +1,97 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.4/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["**", "!!**/dist"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "all",
+      "style": {
+        "noDefaultExport": "off",
+        "useNamingConvention": "off",
+        "noProcessEnv": "off",
+        "useFilenamingConvention": "off",
+        "useImportType": "off",
+        "useComponentExportOnlyModules": "off",
+        "noContinue": "off",
+        "noExcessiveClassesPerFile": "off",
+        "useExportsLast": "off",
+        "useGlobalThis": "off",
+        "noNonNullAssertion": "off",
+        "noEnum": "off",
+        "noMagicNumbers": "off",
+        "useErrorCause": "off",
+        "noTernary": "off",
+        "noHexColors": "off",
+        "noIncrementDecrement": "off"
+      },
+      "correctness": {
+        "noNodejsModules": "off",
+        "noUnresolvedImports": "off",
+        "useQwikValidLexicalScope": "off",
+        "noQwikUseVisibleTask": "off",
+        "noSolidDestructuredProps": "off"
+      },
+      "suspicious": {
+        "noConsole": "off",
+        "noExplicitAny": "off",
+        "noArrayIndexKey": "off",
+        "useAwait": "off",
+        "noEvolvingTypes": "off",
+        "noEmptyBlockStatements": "off",
+        "noUnnecessaryConditions": "off",
+        "noReactSpecificProps": "off"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "off",
+        "useAltText": "off"
+      },
+      "security": {
+        "noSecrets": "off"
+      },
+      "complexity": {
+        "noExcessiveLinesPerFunction": "off",
+        "noExcessiveCognitiveComplexity": "off"
+      },
+      "performance": {
+        "useTopLevelRegex": "off",
+        "noAwaitInLoops": "off",
+        "useSolidForComponent": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "always"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}

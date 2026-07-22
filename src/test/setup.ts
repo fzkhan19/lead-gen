@@ -14,17 +14,36 @@ vi.mock('firebase/firestore', () => ({
   setDoc: vi.fn().mockResolvedValue({}),
   updateDoc: vi.fn().mockResolvedValue({}),
   deleteDoc: vi.fn().mockResolvedValue({}),
-  onSnapshot: vi.fn().mockImplementation((ref, onNext) => {
+  onSnapshot: vi.fn().mockImplementation((_ref, onNext) => {
     // Call onNext with some mock data immediately to clear loading states and show content
     if (typeof onNext === 'function') {
       const mockDocs = [
-        { id: '1', data: () => ({ name: 'TechFlow Solutions', status: 'qualified', businessName: 'TechFlow Solutions', url: 'https://techflow.ai', timestamp: new Date().toISOString(), type: 'info', message: 'New lead identified: TechFlow Solutions' }) },
-        { id: '2', data: () => ({ name: 'GreenLeaf Organic', status: 'contacted', businessName: 'GreenLeaf Organic', url: 'https://greenleaf.com' }) }
+        {
+          id: '1',
+          data: () => ({
+            name: 'TechFlow Solutions',
+            status: 'qualified',
+            businessName: 'TechFlow Solutions',
+            url: 'https://techflow.ai',
+            timestamp: new Date().toISOString(),
+            type: 'info',
+            message: 'New lead identified: TechFlow Solutions',
+          }),
+        },
+        {
+          id: '2',
+          data: () => ({
+            name: 'GreenLeaf Organic',
+            status: 'contacted',
+            businessName: 'GreenLeaf Organic',
+            url: 'https://greenleaf.com',
+          }),
+        },
       ];
       onNext({
         docs: mockDocs,
         forEach: (cb: any) => mockDocs.forEach(cb),
-        empty: false
+        empty: false,
       });
     }
     return () => {};
@@ -40,11 +59,11 @@ vi.mock('firebase/firestore', () => ({
 // Mock Firebase Auth
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn().mockReturnValue({
-    currentUser: { uid: 'test-uid' }
+    currentUser: { uid: 'test-uid' },
   }),
   signInWithPopup: vi.fn(),
   GoogleAuthProvider: class {},
-  onAuthStateChanged: vi.fn().mockImplementation((auth, callback) => {
+  onAuthStateChanged: vi.fn().mockImplementation((_auth, callback) => {
     callback({ uid: 'test-uid' });
     return () => {};
   }),
@@ -59,7 +78,7 @@ vi.mock('firebase/app', () => ({
 vi.mock('../firebase', () => ({
   db: { type: 'firestore' },
   auth: {
-    currentUser: { uid: 'test-uid' }
+    currentUser: { uid: 'test-uid' },
   },
   handleFirestoreError: vi.fn(),
   OperationType: {
@@ -69,114 +88,130 @@ vi.mock('../firebase', () => ({
     LIST: 'list',
     GET: 'get',
     WRITE: 'write',
-  }
+  },
 }));
 
 // Shared mock for AI
 export const mockGenerateContent = vi.fn().mockResolvedValue({
-  candidates: [{
-    content: {
-      parts: [{ text: '{"mock": "response"}' }]
-    }
-  }]
+  candidates: [
+    {
+      content: {
+        parts: [{ text: '{"mock": "response"}' }],
+      },
+    },
+  ],
 });
 
 // Mock Google GenAI
 vi.mock('@google/genai', () => {
-  class MockGoogleGenAI {
+  class MockGoogleGenAi {
     models = {
-      generateContent: mockGenerateContent
+      generateContent: mockGenerateContent,
     };
     chats = {
       create: vi.fn().mockReturnValue({
         sendMessage: vi.fn().mockResolvedValue({
-          candidates: [{
-            content: {
-              parts: [{ text: 'mock response' }]
-            }
-          }]
+          candidates: [
+            {
+              content: {
+                parts: [{ text: 'mock response' }],
+              },
+            },
+          ],
         }),
-        sendMessageStream: vi.fn().mockResolvedValue([{ text: 'mock chunk' }])
-      })
+        sendMessageStream: vi.fn().mockResolvedValue([{ text: 'mock chunk' }]),
+      }),
     };
   }
   return {
-    GoogleGenAI: MockGoogleGenAI,
+    GoogleGenAI: MockGoogleGenAi,
     Type: {
       OBJECT: 'OBJECT',
       ARRAY: 'ARRAY',
       STRING: 'STRING',
-      NUMBER: 'NUMBER'
+      NUMBER: 'NUMBER',
     },
     Modality: {
       AUDIO: 'AUDIO',
       TEXT: 'TEXT',
-      IMAGE: 'IMAGE'
+      IMAGE: 'IMAGE',
     },
     ThinkingLevel: {
       HIGH: 'HIGH',
       LOW: 'LOW',
-      MINIMAL: 'MINIMAL'
-    }
+      MINIMAL: 'MINIMAL',
+    },
   };
 });
 
 // Mock Lucide Icons
 vi.mock('lucide-react', () => ({
-  Search: () => 'Search',
-  MapPin: () => 'MapPin',
-  Loader2: () => 'Loader2',
-  CheckCircle2: () => 'CheckCircle2',
-  AlertCircle: () => 'AlertCircle',
-  Globe: () => 'Globe',
-  Phone: () => 'Phone',
-  Mail: () => 'Mail',
-  ExternalLink: () => 'ExternalLink',
-  Zap: () => 'Zap',
-  Users: () => 'Users',
-  Terminal: () => 'Terminal',
-  ShieldCheck: () => 'ShieldCheck',
   Activity: () => 'Activity',
-  Rocket: () => 'Rocket',
-  X: () => 'X',
-  Filter: () => 'Filter',
-  Download: () => 'Download',
-  Trash2: () => 'Trash2',
-  Eye: () => 'Eye',
-  Send: () => 'Send',
-  Sparkles: () => 'Sparkles',
-  DollarSign: () => 'DollarSign',
-  Facebook: () => 'Facebook',
-  Instagram: () => 'Instagram',
-  Linkedin: () => 'Linkedin',
-  Twitter: () => 'Twitter',
-  Youtube: () => 'Youtube',
-  Star: () => 'Star',
-  Calendar: () => 'Calendar',
-  Building2: () => 'Building2',
-  MoreVertical: () => 'MoreVertical',
-  TrendingUp: () => 'TrendingUp',
-  CheckCircle: () => 'CheckCircle',
-  Clock: () => 'Clock',
+  AlertCircle: () => 'AlertCircle',
+  AlertTriangle: () => 'AlertTriangle',
+  ArrowUpDown: () => 'ArrowUpDown',
   ArrowUpRight: () => 'ArrowUpRight',
-  Target: () => 'Target',
-  Bot: () => 'Bot',
-  User: () => 'User',
-  Upload: () => 'Upload',
-  Image: () => 'Image',
-  Monitor: () => 'Monitor',
-  Smartphone: () => 'Smartphone',
-  Tablet: () => 'Tablet',
-  MessageSquare: () => 'MessageSquare',
   BarChart3: () => 'BarChart3',
-  Settings: () => 'Settings',
-  LogOut: () => 'LogOut',
-  Menu: () => 'Menu',
-  ChevronRight: () => 'ChevronRight',
-  ChevronLeft: () => 'ChevronLeft',
-  Copy: () => 'Copy',
-  Check: () => 'Check',
-  Share2: () => 'Share2',
   Bell: () => 'Bell',
+  Bot: () => 'Bot',
+  Building2: () => 'Building2',
+  Calendar: () => 'Calendar',
+  Check: () => 'Check',
+  CheckCircle: () => 'CheckCircle',
+  CheckCircle2: () => 'CheckCircle2',
+  ChevronDown: () => 'ChevronDown',
+  ChevronLeft: () => 'ChevronLeft',
+  ChevronRight: () => 'ChevronRight',
+  Clock: () => 'Clock',
+  Copy: () => 'Copy',
+  Cpu: () => 'Cpu',
+  DollarSign: () => 'DollarSign',
+  Download: () => 'Download',
+  ExternalLink: () => 'ExternalLink',
+  Eye: () => 'Eye',
+  Facebook: () => 'Facebook',
+  Filter: () => 'Filter',
+  Gauge: () => 'Gauge',
+  Globe: () => 'Globe',
+  Image: () => 'Image',
+  Info: () => 'Info',
+  Instagram: () => 'Instagram',
+  Lightbulb: () => 'Lightbulb',
+  Linkedin: () => 'Linkedin',
+  Loader2: () => 'Loader2',
+  LogOut: () => 'LogOut',
+  Mail: () => 'Mail',
+  MapPin: () => 'MapPin',
+  Menu: () => 'Menu',
+  MessageSquare: () => 'MessageSquare',
+  Monitor: () => 'Monitor',
+  MoreVertical: () => 'MoreVertical',
+  Network: () => 'Network',
+  Phone: () => 'Phone',
+  Presentation: () => 'Presentation',
+  Rocket: () => 'Rocket',
+  Search: () => 'Search',
+  Send: () => 'Send',
+  Settings: () => 'Settings',
+  Share2: () => 'Share2',
+  Shield: () => 'Shield',
+  ShieldAlert: () => 'ShieldAlert',
+  ShieldCheck: () => 'ShieldCheck',
+  Smartphone: () => 'Smartphone',
+  Sparkles: () => 'Sparkles',
+  Star: () => 'Star',
+  Tablet: () => 'Tablet',
+  Target: () => 'Target',
+  Terminal: () => 'Terminal',
+  Trash2: () => 'Trash2',
+  TrendingUp: () => 'TrendingUp',
+  Twitter: () => 'Twitter',
+  Upload: () => 'Upload',
+  User: () => 'User',
+  Users: () => 'Users',
   Wand2: () => 'Wand2',
+  X: () => 'X',
+  XCircle: () => 'XCircle',
+  Youtube: () => 'Youtube',
+  Zap: () => 'Zap',
 }));

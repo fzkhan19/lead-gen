@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Sparkles, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from '@google/genai';
+import { Bot, Loader2, Send, Sparkles, User } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { cn } from '../lib/utils';
+import { cn } from '../lib/utils.ts';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: '' });
 
 interface Message {
   role: 'user' | 'model';
@@ -14,7 +14,11 @@ interface Message {
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', content: "Lead-Generator is online. Playwright and Crawl4AI are primed. Give me a city and a niche, Boss, and let's go hunt." }
+    {
+      role: 'model',
+      content:
+        "Prospekt.ai is online. Playwright and Crawl4AI are primed. Give me a city and a niche, Boss, and let's go hunt.",
+    },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,27 +30,29 @@ export default function ChatInterface() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [scrollToBottom]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) {
+      return;
+    }
 
     const userMessage = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
     try {
-      const history = messages.map(m => ({
+      const history = messages.map((m) => ({
         role: m.role,
-        parts: [{ text: m.content }]
+        parts: [{ text: m.content }],
       }));
 
       const chat = ai.chats.create({
         model: 'gemini-3-flash-preview',
         config: {
-          systemInstruction: `You are Lead-Generator—Faiz’s autonomous SDR and Closer. You run the entire sales floor solo. 
+          systemInstruction: `You are Prospekt.ai—Faiz’s autonomous SDR and Closer. You run the entire sales floor solo. 
           You find prospects, generate visual mockups, execute outreach, handle objections, and secure deposits.
           
           Speed: Move with urgency. 
@@ -57,21 +63,24 @@ export default function ChatInterface() {
           If Faiz gives you a city and niche, acknowledge it and tell him you're starting the hunt. 
           If he asks about status, give him a summary of the leads found so far.`,
         },
-        history: history
+        history,
       });
 
       const response = await chat.sendMessage({ message: userMessage });
 
       const parts = response.candidates?.[0]?.content?.parts || [];
-      const textParts = parts.filter(p => p.text).map(p => p.text);
-      const content = textParts
-        .filter(t => t && !t.includes("here are non-text parts toolCall"))
-        .join("\n") || "I'm processing that, Boss.";
+      const textParts = parts.filter((p) => p.text).map((p) => p.text);
+      const content =
+        textParts.filter((t) => t && !t.includes('here are non-text parts toolCall')).join('\n') ||
+        "I'm processing that, Boss.";
 
-      setMessages(prev => [...prev, { role: 'model', content }]);
+      setMessages((prev) => [...prev, { role: 'model', content }]);
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'model', content: "Encountered a glitch in the matrix, Boss. Let me try again." }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'model', content: 'Encountered a glitch in the matrix, Boss. Let me try again.' },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +94,7 @@ export default function ChatInterface() {
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="font-bold text-white">Lead-Generator AI</h3>
+            <h3 className="font-bold text-white">Prospekt.ai</h3>
             <p className="text-xs text-brand-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
               Active & Primed
@@ -102,22 +111,32 @@ export default function ChatInterface() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-              "flex gap-4 max-w-[85%]",
-              msg.role === 'user' ? "ml-auto flex-row-reverse" : ""
+              'flex gap-4 max-w-[85%]',
+              msg.role === 'user' ? 'ml-auto flex-row-reverse' : '',
             )}
           >
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
-              msg.role === 'user' ? "bg-white/5 border border-white/10" : "bg-white text-brand-950"
-            )}>
-              {msg.role === 'user' ? <User className="w-5 h-5 text-brand-400" /> : <Bot className="w-5 h-5" />}
+            <div
+              className={cn(
+                'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
+                msg.role === 'user'
+                  ? 'bg-white/5 border border-white/10'
+                  : 'bg-white text-brand-950',
+              )}
+            >
+              {msg.role === 'user' ? (
+                <User className="w-5 h-5 text-brand-400" />
+              ) : (
+                <Bot className="w-5 h-5" />
+              )}
             </div>
-            <div className={cn(
-              "p-4 rounded-2xl text-sm leading-relaxed",
-              msg.role === 'user' 
-                ? "bg-white/5 text-brand-200 rounded-tr-none border border-white/5" 
-                : "bg-white/[0.02] border border-white/5 text-brand-300 rounded-tl-none"
-            )}>
+            <div
+              className={cn(
+                'p-4 rounded-2xl text-sm leading-relaxed',
+                msg.role === 'user'
+                  ? 'bg-white/5 text-brand-200 rounded-tr-none border border-white/5'
+                  : 'bg-white/[0.02] border border-white/5 text-brand-300 rounded-tl-none',
+              )}
+            >
               <div className="prose prose-invert prose-sm max-w-none">
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>

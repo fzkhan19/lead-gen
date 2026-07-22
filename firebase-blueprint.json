@@ -11,9 +11,17 @@
         "email": { "type": "string" },
         "city": { "type": "string" },
         "niche": { "type": "string" },
-        "status": { 
+        "status": {
           "type": "string",
-          "enum": ["prospect", "qualified", "mockup_ready", "processing_campaign", "outreach_sent", "replied", "closed"]
+          "enum": [
+            "prospect",
+            "qualified",
+            "mockup_ready",
+            "processing_campaign",
+            "outreach_sent",
+            "replied",
+            "closed"
+          ]
         },
         "createdAt": { "type": "string", "format": "date-time" },
         "last_outreach_attempt": { "type": "string", "format": "date-time" },
@@ -72,12 +80,31 @@
         "uid": { "type": "string" }
       },
       "required": ["businessName", "city", "niche", "status", "createdAt", "uid"]
+    },
+    "CampaignLog": {
+      "title": "Campaign Log",
+      "description": "Historical record of an automation action, status, or error.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "leadId": { "type": "string" },
+        "leadName": { "type": "string" },
+        "action": { "type": "string" },
+        "status": { "type": "string", "enum": ["info", "success", "warning", "error"] },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "action", "status", "message", "timestamp"]
     }
   },
   "firestore": {
     "leads/{leadId}": {
       "schema": { "$ref": "Lead" },
       "description": "Collection of leads discovered and managed by users."
+    },
+    "campaign_logs/{logId}": {
+      "schema": { "$ref": "CampaignLog" },
+      "description": "Chronological record of automation runs, outreach statuses, errors, and close events."
     }
   }
 }

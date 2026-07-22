@@ -1,9 +1,6 @@
 {
-  "name": "Lead-Generator",
+  "name": "Prospekt.ai",
   "description": "Faiz's autonomous SDR and Closer. Finds prospects, generates mockups, and handles outreach.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone",
-    "geolocation"
-  ]
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,5 +1,5 @@
-import { motion } from 'motion/react';
 import { Globe, Monitor, Smartphone, Tablet, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useState } from 'react';
 
 interface WebsitePreviewProps {
@@ -12,7 +12,7 @@ export default function WebsitePreview({ html, businessName, onClose }: WebsiteP
   const [view, setView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -26,24 +26,26 @@ export default function WebsitePreview({ html, businessName, onClose }: WebsiteP
           </div>
           <div>
             <h3 className="font-bold text-white text-sm">{businessName} - AI Mockup</h3>
-            <p className="text-[10px] text-brand-500 font-mono uppercase tracking-widest">Live Preview Mode</p>
+            <p className="text-[10px] text-brand-500 font-mono uppercase tracking-widest">
+              Live Preview Mode
+            </p>
           </div>
         </div>
 
         <div className="flex items-center bg-black rounded-xl p-1 border border-white/5">
-          <button 
+          <button
             onClick={() => setView('desktop')}
             className={`p-2 rounded-lg transition-all ${view === 'desktop' ? 'bg-white text-brand-950' : 'text-brand-500 hover:text-white'}`}
           >
             <Monitor className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => setView('tablet')}
             className={`p-2 rounded-lg transition-all ${view === 'tablet' ? 'bg-white text-brand-950' : 'text-brand-500 hover:text-white'}`}
           >
             <Tablet className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => setView('mobile')}
             className={`p-2 rounded-lg transition-all ${view === 'mobile' ? 'bg-white text-brand-950' : 'text-brand-500 hover:text-white'}`}
           >
@@ -51,7 +53,7 @@ export default function WebsitePreview({ html, businessName, onClose }: WebsiteP
           </button>
         </div>
 
-        <button 
+        <button
           onClick={onClose}
           className="p-2 hover:bg-white/5 rounded-lg text-brand-500 hover:text-white transition-all"
         >
@@ -61,15 +63,14 @@ export default function WebsitePreview({ html, businessName, onClose }: WebsiteP
 
       {/* Preview Area */}
       <div className="flex-1 bg-brand-950 p-8 overflow-hidden flex justify-center">
-        <motion.div 
-          layout
+        <motion.div
+          layout={true}
           className={`bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 ${
-            view === 'desktop' ? 'w-full max-w-6xl' : 
-            view === 'tablet' ? 'w-[768px]' : 'w-[375px]'
+            view === 'desktop' ? 'w-full max-w-6xl' : view === 'tablet' ? 'w-[768px]' : 'w-[375px]'
           }`}
         >
-          <iframe 
-            srcDoc={html} 
+          <iframe
+            srcDoc={html}
             title="AI Generated Website"
             className="w-full h-full border-none"
             sandbox="allow-scripts allow-forms allow-same-origin"

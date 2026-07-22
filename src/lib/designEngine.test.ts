@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { getBestArchetype, DESIGN_ARCHETYPES } from './designEngine';
+import { describe, expect, it } from 'vitest';
+import { DESIGN_ARCHETYPES, getBestArchetype } from './designEngine.ts';
 
 describe('designEngine', () => {
   it('should return tech-forward for tech-related keywords', () => {

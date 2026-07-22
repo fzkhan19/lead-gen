@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import OutreachTracker from './OutreachTracker';
+import { describe, expect, it } from 'vitest';
+import OutreachTracker from './OutreachTracker.tsx';
 
 describe('OutreachTracker', () => {
   it('renders outreach overview', () => {

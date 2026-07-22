@@ -1,61 +1,138 @@
-import { useState, useEffect } from 'react';
-import { 
-  Globe, 
-  ExternalLink, 
-  Sparkles, 
-  MapPin, 
-  Search, 
-  Copy, 
-  Check, 
-  ArrowUpDown, 
-  TrendingUp, 
-  Gauge, 
-  Shield,
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import {
   Activity,
+  ArrowUpDown,
+  Check,
+  Copy,
   DollarSign,
-  Calendar,
-  Filter
+  ExternalLink,
+  Filter,
+  Gauge,
+  Globe,
+  MapPin,
+  Search,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType } from '../firebase';
-import { motion, AnimatePresence } from 'motion/react';
-import WebsitePreview from './WebsitePreview';
-import { cn } from '../lib/utils';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { auth, db, handleFirestoreError, OperationType } from '../firebase.ts';
+import WebsitePreview from './WebsitePreview.tsx';
 
 export default function WebsitesTracker() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
-  
+
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedArchetype, setSelectedArchetype] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'setup_asc' | 'setup_desc' | 'monthly'>('newest');
-  
+
   // Clipboard copied state
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const [demoMode, setDemoMode] = useState(() => localStorage.getItem('demo_mode') === 'true');
+
   useEffect(() => {
-    if (!auth.currentUser) return;
-    const q = query(
-      collection(db, 'leads'),
-      where('uid', '==', auth.currentUser.uid),
-      where('status', 'in', ['outreach_sent', 'replied', 'closed']),
-      orderBy('outreachSentAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setLeads(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'leads');
+    const handleDemoChange = (e: any) => {
+      if (e?.detail && typeof e.detail.enabled === 'boolean') {
+        setDemoMode(e.detail.enabled);
+      } else {
+        setDemoMode(localStorage.getItem('demo_mode') === 'true');
+      }
+    };
+    window.addEventListener('demoModeChanged', handleDemoChange);
+    return () => window.removeEventListener('demoModeChanged', handleDemoChange);
+  }, []);
+
+  const DEMO_WEBSITES = [
+    {
+      id: 'demo-web-1',
+      businessName: 'Boutique Pâtisserie Paris',
+      city: 'Paris',
+      niche: 'Bakery & Patisserie',
+      status: 'replied',
+      email: 'contact@patisserie-paris.fr',
+      previewUrl: 'https://patisserie-paris-demo.ai',
+      offerPrice: 349,
+      subscriptionPrice: 19,
+      designArchetype: 'luxury',
+      outreachSentAt: { seconds: Math.floor(Date.now() / 1000) - 86400 },
+      generatedHtml: `<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head><body class="bg-black text-amber-100 font-serif flex flex-col justify-between min-h-screen p-8"><header class="border-b border-amber-900/30 pb-4"><h1 class="text-3xl font-bold text-amber-400">Boutique Pâtisserie Paris</h1><p class="text-xs text-amber-200/60 uppercase tracking-widest mt-1">Artisanal French Pastries & Fine Catering</p></header><main class="my-auto space-y-6 text-center"><p class="text-sm text-amber-100/80 leading-relaxed max-w-md mx-auto">Handcrafted macarons, viennoiseries, and custom wedding cakes delivered fresh daily across Île-de-France.</p><button class="bg-amber-500 text-black font-bold px-6 py-3 rounded-full text-xs hover:bg-amber-400 transition-colors">Reserve Private Tasting</button></main></body></html>`
+    },
+    {
+      id: 'demo-web-2',
+      businessName: 'L\'Atelier Boulangerie Lyon',
+      city: 'Lyon',
+      niche: 'Artisan Bakery',
+      status: 'outreach_sent',
+      email: 'boulangerie.lyon@gmail.com',
+      previewUrl: 'https://boulangerie-lyon-demo.ai',
+      offerPrice: 249,
+      subscriptionPrice: 10,
+      designArchetype: 'editorial',
+      outreachSentAt: { seconds: Math.floor(Date.now() / 1000) - 43200 },
+      generatedHtml: `<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head><body class="bg-stone-100 text-stone-900 font-sans p-8 min-h-screen flex flex-col justify-between"><header class="border-b border-stone-300 pb-4"><h1 class="text-2xl font-black">L'Atelier Boulangerie Lyon</h1></header><main class="my-auto space-y-4"><p class="text-stone-600 text-sm">Authentic sourdough breads baked fresh in traditional stone deck ovens every morning.</p></main></body></html>`
+    },
+    {
+      id: 'demo-web-3',
+      businessName: 'Apex Cybersecurity Labs',
+      city: 'Berlin',
+      niche: 'B2B Software & Security',
+      status: 'closed',
+      email: 'info@apexsecurity.de',
+      previewUrl: 'https://apexsecurity-demo.ai',
+      offerPrice: 499,
+      subscriptionPrice: 49,
+      designArchetype: 'tech-forward',
+      outreachSentAt: { seconds: Math.floor(Date.now() / 1000) - 172800 },
+      generatedHtml: `<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head><body class="bg-slate-950 text-blue-400 font-mono p-8 min-h-screen flex flex-col justify-between"><header class="border-b border-blue-900/40 pb-4"><h1 class="text-2xl font-bold text-white">Apex Cybersecurity Labs</h1></header></body></html>`
+    },
+  ];
+
+  const effectiveLeads = demoMode
+    ? [...leads, ...DEMO_WEBSITES.filter((dw) => !leads.some((l) => l.id === dw.id))]
+    : leads;
+
+  useEffect(() => {
+    let unsubscribeSnap: () => void = () => {};
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      const q = query(
+        collection(db, 'leads'),
+        where('uid', '==', user.uid),
+        where('status', 'in', ['outreach_sent', 'replied', 'closed']),
+        orderBy('outreachSentAt', 'desc'),
+      );
+      unsubscribeSnap = onSnapshot(
+        q,
+        (snapshot) => {
+          setLeads(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+          setLoading(false);
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.LIST, 'leads');
+          setLoading(false);
+        },
+      );
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribeSnap();
+      unsubscribeAuth();
+    };
   }, []);
 
   const copyToClipboard = (text: string, id: string) => {
-    if (!text) return;
+    if (!text) {
+      return;
+    }
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(text);
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
@@ -77,24 +154,25 @@ export default function WebsitesTracker() {
 
   // Extract all distinct archetypes actually generated for filters
   const availableArchetypes = Array.from(
-    new Set(leads.map(lead => lead.designArchetype).filter(Boolean))
+    new Set(effectiveLeads.map((lead) => lead.designArchetype).filter(Boolean)),
   );
 
   // Compute stats
-  const activeAssets = leads.length;
-  const mrr = leads.reduce((sum, lead) => sum + (Number(lead.subscriptionPrice) || 10), 0);
-  const totalSetupValue = leads.reduce((sum, lead) => sum + (Number(lead.offerPrice) || 249), 0);
+  const activeAssets = effectiveLeads.length;
+  const mrr = effectiveLeads.reduce((sum, lead) => sum + (Number(lead.subscriptionPrice) || 10), 0);
+  const totalSetupValue = effectiveLeads.reduce((sum, lead) => sum + (Number(lead.offerPrice) || 249), 0);
   const avgSetupValue = activeAssets > 0 ? Math.round(totalSetupValue / activeAssets) : 0;
 
   // Filter & Sort logic
-  const filteredLeads = leads
-    .filter(lead => {
+  const filteredLeads = effectiveLeads
+    .filter((lead) => {
       const nameMatch = (lead.businessName || '').toLowerCase().includes(searchTerm.toLowerCase());
       const cityMatch = (lead.city || '').toLowerCase().includes(searchTerm.toLowerCase());
       const nicheMatch = (lead.niche || '').toLowerCase().includes(searchTerm.toLowerCase());
       const searchMatch = nameMatch || cityMatch || nicheMatch;
 
-      const archetypeMatch = selectedArchetype === 'all' || lead.designArchetype === selectedArchetype;
+      const archetypeMatch =
+        selectedArchetype === 'all' || lead.designArchetype === selectedArchetype;
 
       return searchMatch && archetypeMatch;
     })
@@ -125,7 +203,7 @@ export default function WebsitesTracker() {
     }
     const speed = 94 + (Math.abs(hash) % 6); // 94 - 99
     const uptime = 99.9; // standard
-    const loadTime = (0.15 + (Math.abs(hash % 15) / 100)).toFixed(2); // 0.15s - 0.30s
+    const loadTime = (0.15 + Math.abs(hash % 15) / 100).toFixed(2); // 0.15s - 0.30s
     const visitors = 45 + (Math.abs(hash) % 250); // 45 - 295 visitors
     return { speed, uptime, loadTime, visitors };
   };
@@ -136,7 +214,13 @@ export default function WebsitesTracker() {
       case 'tech-forward':
         return (
           <div className="absolute inset-0 bg-slate-950 flex flex-col justify-between p-6 overflow-hidden">
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #3b82f6 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+            <div
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage: 'radial-gradient(circle, #3b82f6 1px, transparent 1px)',
+                backgroundSize: '16px 16px',
+              }}
+            />
             <div className="flex justify-between items-center z-10">
               <div className="w-12 h-1.5 bg-blue-500 rounded-full" />
               <div className="flex gap-1.5">
@@ -150,8 +234,12 @@ export default function WebsitesTracker() {
               <div className="w-5/6 h-1 bg-slate-800 rounded-sm" />
             </div>
             <div className="flex gap-2 z-10">
-              <div className="w-12 h-4 bg-blue-500/10 border border-blue-500/30 rounded flex items-center justify-center"><span className="text-[6px] font-mono text-blue-400">DEPLOYED</span></div>
-              <div className="w-8 h-4 bg-slate-900 border border-slate-800 rounded flex items-center justify-center"><span className="text-[6px] font-mono text-slate-500">API</span></div>
+              <div className="w-12 h-4 bg-blue-500/10 border border-blue-500/30 rounded flex items-center justify-center">
+                <span className="text-[6px] font-mono text-blue-400">DEPLOYED</span>
+              </div>
+              <div className="w-8 h-4 bg-slate-900 border border-slate-800 rounded flex items-center justify-center">
+                <span className="text-[6px] font-mono text-slate-500">API</span>
+              </div>
             </div>
           </div>
         );
@@ -160,11 +248,15 @@ export default function WebsitesTracker() {
           <div className="absolute inset-0 bg-neutral-950 flex flex-col justify-between p-6 items-center overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-neutral-900/30 via-neutral-950/80 to-neutral-950" />
             <div className="w-full flex justify-between items-center z-10 border-b border-amber-900/10 pb-2">
-              <span className="text-[8px] font-serif font-semibold text-amber-500 tracking-[0.2em]">L</span>
+              <span className="text-[8px] font-serif font-semibold text-amber-500 tracking-[0.2em]">
+                L
+              </span>
               <div className="w-8 h-1 bg-neutral-800 rounded-full" />
             </div>
             <div className="text-center space-y-2 z-10 max-w-[80%]">
-              <p className="text-[10px] font-serif italic text-amber-100 tracking-wide">Elite Digital Craft</p>
+              <p className="text-[10px] font-serif italic text-amber-100 tracking-wide">
+                Elite Digital Craft
+              </p>
               <div className="w-12 h-[1px] bg-amber-500/30 mx-auto" />
             </div>
             <div className="w-16 h-4 border border-amber-500/20 rounded-full flex items-center justify-center z-10 bg-amber-950/20">
@@ -200,8 +292,12 @@ export default function WebsitesTracker() {
               <div className="w-3/4 h-1 bg-neutral-400" />
             </div>
             <div className="flex gap-2">
-              <div className="px-1.5 py-0.5 bg-fuchsia-400 border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"><span className="text-[5px] font-mono font-bold text-black">GO</span></div>
-              <div className="px-1.5 py-0.5 bg-cyan-300 border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"><span className="text-[5px] font-mono font-bold text-black">INFO</span></div>
+              <div className="px-1.5 py-0.5 bg-fuchsia-400 border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                <span className="text-[5px] font-mono font-bold text-black">GO</span>
+              </div>
+              <div className="px-1.5 py-0.5 bg-cyan-300 border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                <span className="text-[5px] font-mono font-bold text-black">INFO</span>
+              </div>
             </div>
           </div>
         );
@@ -279,7 +375,14 @@ export default function WebsitesTracker() {
       case 'retro':
         return (
           <div className="absolute inset-0 bg-amber-50 flex flex-col justify-between p-6 overflow-hidden">
-            <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'linear-gradient(rgba(120,50,10,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(120,50,10,0.3) 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
+            <div
+              className="absolute inset-0 opacity-5"
+              style={{
+                backgroundImage:
+                  'linear-gradient(rgba(120,50,10,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(120,50,10,0.3) 1px, transparent 1px)',
+                backgroundSize: '10px 10px',
+              }}
+            />
             <div className="flex justify-between items-center z-10">
               <span className="text-[8px] font-mono font-bold text-amber-900">📼 RETRO</span>
               <div className="w-8 h-1 bg-amber-200 rounded-full" />
@@ -318,7 +421,9 @@ export default function WebsitesTracker() {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <Sparkles className="w-10 h-10 text-brand-400 animate-spin" />
-        <p className="text-brand-500 text-sm font-mono tracking-widest uppercase">Syncing Ecosystem...</p>
+        <p className="text-brand-500 text-sm font-mono tracking-widest uppercase">
+          Syncing Ecosystem...
+        </p>
       </div>
     );
   }
@@ -328,22 +433,28 @@ export default function WebsitesTracker() {
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-display font-bold text-white tracking-tight">Ecosystem Dashboard</h2>
-          <p className="text-brand-500 font-medium mt-1">Real-time telemetry and management of live AI-deployed digital assets.</p>
+          <h2 className="text-3xl font-display font-bold text-white tracking-tight">
+            Ecosystem Dashboard
+          </h2>
+          <p className="text-brand-500 font-medium mt-1">
+            Real-time telemetry and management of live AI-deployed digital assets.
+          </p>
         </div>
       </div>
 
       {/* Bento Stats Row */}
       {leads.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
             className="glass p-6 rounded-3xl border border-white/[0.02] bg-white/[0.01] flex items-center justify-between"
           >
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest block">Active Deployed Assets</span>
+              <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest block">
+                Active Deployed Assets
+              </span>
               <p className="text-3xl font-display font-bold text-white">{activeAssets}</p>
               <span className="text-[10px] text-brand-400 font-mono flex items-center gap-1 mt-1">
                 <Activity className="w-3 h-3 text-brand-400" />
@@ -355,14 +466,16 @@ export default function WebsitesTracker() {
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
             className="glass p-6 rounded-3xl border border-white/[0.02] bg-white/[0.01] flex items-center justify-between"
           >
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest block">Projected MRR</span>
+              <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest block">
+                Projected MRR
+              </span>
               <p className="text-3xl font-display font-bold text-white">€{mrr}</p>
               <span className="text-[10px] text-brand-400 font-mono flex items-center gap-1 mt-1">
                 <TrendingUp className="w-3 h-3 text-brand-400" />
@@ -374,14 +487,16 @@ export default function WebsitesTracker() {
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
             className="glass p-6 rounded-3xl border border-white/[0.02] bg-white/[0.01] flex items-center justify-between"
           >
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest block">Avg Setup Value</span>
+              <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest block">
+                Avg Setup Value
+              </span>
               <p className="text-3xl font-display font-bold text-white">€{avgSetupValue}</p>
               <span className="text-[10px] text-brand-400 font-mono flex items-center gap-1 mt-1">
                 <Gauge className="w-3 h-3 text-brand-400" />
@@ -401,8 +516,8 @@ export default function WebsitesTracker() {
           {/* Search Bar */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-600" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search assets by business, niche, or city..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -415,14 +530,18 @@ export default function WebsitesTracker() {
             {/* Archetype Filter Pillbox */}
             <div className="flex items-center gap-2 bg-brand-950/60 border border-white/[0.05] rounded-2xl px-3 py-1.5">
               <Filter className="w-3.5 h-3.5 text-brand-600" />
-              <select 
+              <select
                 value={selectedArchetype}
                 onChange={(e) => setSelectedArchetype(e.target.value)}
                 className="bg-transparent text-xs text-brand-300 focus:outline-none cursor-pointer pr-1"
               >
-                <option value="all" className="bg-brand-950 text-white">All Archetypes</option>
-                {availableArchetypes.map(arch => (
-                  <option key={arch} value={arch} className="bg-brand-950 text-white capitalize">{arch}</option>
+                <option value="all" className="bg-brand-950 text-white">
+                  All Archetypes
+                </option>
+                {availableArchetypes.map((arch) => (
+                  <option key={arch} value={arch} className="bg-brand-950 text-white capitalize">
+                    {arch}
+                  </option>
                 ))}
               </select>
             </div>
@@ -430,15 +549,23 @@ export default function WebsitesTracker() {
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2 bg-brand-950/60 border border-white/[0.05] rounded-2xl px-3 py-1.5">
               <ArrowUpDown className="w-3.5 h-3.5 text-brand-600" />
-              <select 
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="bg-transparent text-xs text-brand-300 focus:outline-none cursor-pointer pr-1"
               >
-                <option value="newest" className="bg-brand-950 text-white">Sort: Newest Deployed</option>
-                <option value="setup_asc" className="bg-brand-950 text-white">Sort: Setup Price (Low-High)</option>
-                <option value="setup_desc" className="bg-brand-950 text-white">Sort: Setup Price (High-Low)</option>
-                <option value="monthly" className="bg-brand-950 text-white">Sort: Highest Subscription</option>
+                <option value="newest" className="bg-brand-950 text-white">
+                  Sort: Newest Deployed
+                </option>
+                <option value="setup_asc" className="bg-brand-950 text-white">
+                  Sort: Setup Price (Low-High)
+                </option>
+                <option value="setup_desc" className="bg-brand-950 text-white">
+                  Sort: Setup Price (High-Low)
+                </option>
+                <option value="monthly" className="bg-brand-950 text-white">
+                  Sort: Highest Subscription
+                </option>
               </select>
             </div>
           </div>
@@ -452,14 +579,19 @@ export default function WebsitesTracker() {
             <Globe className="w-8 h-8 text-brand-700" />
           </div>
           <h3 className="text-xl font-display font-bold text-white mb-3">No Assets Deployed</h3>
-          <p className="text-brand-600 max-w-xs mx-auto text-sm leading-relaxed">Launch an AI campaign from the leads table to generate, deploy, and track websites here.</p>
+          <p className="text-brand-600 max-w-xs mx-auto text-sm leading-relaxed">
+            Launch an AI campaign from the leads table to generate, deploy, and track websites here.
+          </p>
         </div>
       ) : filteredLeads.length === 0 ? (
         <div className="glass p-20 text-center rounded-[40px] border border-white/[0.03]">
           <Search className="w-8 h-8 text-brand-700 mx-auto mb-4" />
           <p className="text-brand-500 font-medium">No assets matching your search criteria.</p>
-          <button 
-            onClick={() => { setSearchTerm(''); setSelectedArchetype('all'); }}
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setSelectedArchetype('all');
+            }}
             className="text-xs text-brand-400 underline mt-2 hover:text-white transition-colors"
           >
             Reset Filters
@@ -480,10 +612,10 @@ export default function WebsitesTracker() {
                 {/* Visual Thumbnail Frame */}
                 <div className="relative h-48 bg-brand-950 overflow-hidden border-b border-white/[0.03]">
                   {renderArchetypeThumbnail(lead.designArchetype)}
-                  
+
                   {/* Subtle Gradient Cover */}
                   <div className="absolute inset-0 bg-gradient-to-t from-brand-950/90 via-transparent to-transparent opacity-60" />
-                  
+
                   {/* Top Badges */}
                   <div className="absolute top-4 left-4 z-20 flex gap-2">
                     <span className="text-[8px] font-mono font-bold uppercase tracking-wider px-2 py-1 rounded bg-black/60 border border-white/5 text-brand-400">
@@ -494,10 +626,12 @@ export default function WebsitesTracker() {
                   {/* Telemetry Indicator (Uptime Blink) */}
                   <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-black/60 border border-white/5 px-2 py-1 rounded">
                     <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                     </span>
-                    <span className="text-[8px] font-mono text-emerald-400 font-bold uppercase tracking-wider">LIVE</span>
+                    <span className="text-[8px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                      LIVE
+                    </span>
                   </div>
                 </div>
 
@@ -509,13 +643,15 @@ export default function WebsitesTracker() {
                         <h3 className="text-lg font-display font-bold text-white tracking-tight truncate group-hover:text-brand-300 transition-colors">
                           {lead.businessName}
                         </h3>
-                        <p className="text-[10px] font-mono text-brand-600 uppercase tracking-widest truncate">{lead.niche}</p>
+                        <p className="text-[10px] font-mono text-brand-300 uppercase tracking-widest truncate">
+                          {lead.niche}
+                        </p>
                       </div>
-                      
+
                       {lead.previewUrl && (
-                        <button 
+                        <button
                           onClick={() => copyToClipboard(lead.previewUrl, lead.id)}
-                          className="p-2 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] rounded-xl text-brand-600 hover:text-white transition-all relative"
+                          className="p-2 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] rounded-xl text-brand-300 hover:text-white transition-all relative"
                           title="Copy preview link"
                         >
                           {copiedId === lead.id ? (
@@ -527,20 +663,49 @@ export default function WebsitesTracker() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-brand-700">
-                      <MapPin className="w-3.5 h-3.5 text-brand-700 shrink-0" />
-                      <span className="text-[10px] font-mono uppercase tracking-wider truncate">{lead.city}</span>
+                    <div className="flex items-center gap-2 text-brand-300">
+                      <MapPin className="w-3.5 h-3.5 text-brand-300 shrink-0" />
+                      <span className="text-[10px] font-mono uppercase tracking-wider truncate">
+                        {lead.city}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      {lead.previewUrl ? (
+                        <a
+                          href={lead.previewUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 transition-colors truncate underline decoration-cyan-400/30 hover:decoration-cyan-300 tracking-wide block w-full"
+                          title={lead.previewUrl}
+                        >
+                          {lead.previewUrl.replace('https://', '').replace('http://', '')}
+                        </a>
+                      ) : (
+                        <span className="text-[10px] font-mono text-brand-400 uppercase tracking-wider">
+                          No live URL generated
+                        </span>
+                      )}
                     </div>
 
                     {/* Technical Mock Telemetry Metrics Grid */}
                     <div className="grid grid-cols-2 gap-2 p-3 bg-white/[0.01] border border-white/[0.02] rounded-2xl">
                       <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-mono text-brand-600 uppercase">Performance</span>
-                        <span className="text-[9px] font-mono font-bold text-emerald-400">{metrics.speed}%</span>
+                        <span className="text-[9px] font-mono text-brand-400 uppercase">
+                          Performance
+                        </span>
+                        <span className="text-[9px] font-mono font-bold text-emerald-400">
+                          {metrics.speed}%
+                        </span>
                       </div>
                       <div className="flex items-center justify-between border-l border-white/[0.02] pl-3">
-                        <span className="text-[9px] font-mono text-brand-600 uppercase">Response</span>
-                        <span className="text-[9px] font-mono font-bold text-brand-400">{metrics.loadTime}s</span>
+                        <span className="text-[9px] font-mono text-brand-400 uppercase">
+                          Response
+                        </span>
+                        <span className="text-[9px] font-mono font-bold text-brand-200">
+                          {metrics.loadTime}s
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -549,17 +714,25 @@ export default function WebsitesTracker() {
                   <div className="space-y-4 pt-4 border-t border-white/[0.02]">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-[8px] font-bold text-brand-700 uppercase tracking-wider block">One-time Setup</span>
-                        <span className="text-base font-display font-bold text-white">€{lead.offerPrice || '249'}</span>
+                        <span className="text-[8px] font-bold text-brand-400 uppercase tracking-wider block">
+                          One-time Setup
+                        </span>
+                        <span className="text-base font-display font-bold text-white">
+                          €{lead.offerPrice || '249'}
+                        </span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[8px] font-bold text-brand-700 uppercase tracking-wider block">Hosting / mo</span>
-                        <span className="text-base font-display font-bold text-white">€{lead.subscriptionPrice || '10'}</span>
+                        <span className="text-[8px] font-bold text-brand-400 uppercase tracking-wider block">
+                          Hosting / mo
+                        </span>
+                        <span className="text-base font-display font-bold text-white">
+                          €{lead.subscriptionPrice || '10'}
+                        </span>
                       </div>
                     </div>
 
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => setSelectedLead(lead)}
                         className="flex-1 btn-sm bg-white/5 hover:bg-white/10 text-white font-medium border border-white/5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all"
                       >
@@ -567,11 +740,11 @@ export default function WebsitesTracker() {
                         Preview Mockup
                       </button>
                       {lead.previewUrl && (
-                        <a 
-                          href={lead.previewUrl} 
-                          target="_blank" 
+                        <a
+                          href={lead.previewUrl}
+                          target="_blank"
                           rel="noreferrer"
-                          className="p-2.5 bg-white/[0.02] hover:bg-white/[0.08] border border-white/[0.05] rounded-xl text-brand-500 hover:text-white transition-all flex items-center justify-center shrink-0"
+                          className="p-2.5 bg-white/[0.02] hover:bg-white/[0.08] border border-white/[0.05] rounded-xl text-brand-300 hover:text-white transition-all flex items-center justify-center shrink-0"
                           title="Visit live site"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -589,10 +762,13 @@ export default function WebsitesTracker() {
       {/* Website Preview Full Screen Modal */}
       <AnimatePresence>
         {selectedLead && (
-          <WebsitePreview 
-            html={selectedLead.generatedHtml || "<html><body style='background:#09090b;color:#a1a1aa;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;'><h1>No preview available</h1></body></html>"} 
-            businessName={selectedLead.businessName || 'Business'} 
-            onClose={() => setSelectedLead(null)} 
+          <WebsitePreview
+            html={
+              selectedLead.generatedHtml ||
+              "<html><body style='background:#09090b;color:#a1a1aa;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;'><h1>No preview available</h1></body></html>"
+            }
+            businessName={selectedLead.businessName || 'Business'}
+            onClose={() => setSelectedLead(null)}
           />
         )}
       </AnimatePresence>

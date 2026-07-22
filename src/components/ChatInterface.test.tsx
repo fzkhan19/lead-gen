@@ -1,7 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ChatInterface from './ChatInterface';
-import { mockGenerateContent } from '../test/setup';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import ChatInterface from './ChatInterface.tsx';
 
 // Mock motion/react
 vi.mock('motion/react', () => ({
@@ -14,12 +13,14 @@ vi.mock('motion/react', () => ({
 describe('ChatInterface', () => {
   it('renders initial model message', () => {
     render(<ChatInterface />);
-    expect(screen.getByText(/Lead-Generator is online/i)).toBeInTheDocument();
+    expect(screen.getByText(/Prospekt.ai is online/i)).toBeInTheDocument();
   });
 
   it('updates input value on change', () => {
     render(<ChatInterface />);
-    const input = screen.getByPlaceholderText(/Give me a city and a niche, Boss.../i) as HTMLInputElement;
+    const input = screen.getByPlaceholderText(
+      /Give me a city and a niche, Boss.../i,
+    ) as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'Tampa Plumbing' } });
     expect(input.value).toBe('Tampa Plumbing');
   });
@@ -33,7 +34,7 @@ describe('ChatInterface', () => {
     fireEvent.click(sendButton);
 
     expect(screen.getByText('Tampa Plumbing')).toBeInTheDocument();
-    
+
     await waitFor(() => {
       expect(screen.getByText('mock response')).toBeInTheDocument();
     });

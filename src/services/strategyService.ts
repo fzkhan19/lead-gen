@@ -1,7 +1,7 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { withRetry } from "../lib/retry";
+import { GoogleGenAI, Type } from '@google/genai';
+import { withRetry } from '../lib/retry.ts';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: '' });
 
 export async function getGlobalStrategy() {
   const prompt = `Act as a world-class B2B lead generation strategist. 
@@ -17,22 +17,24 @@ export async function getGlobalStrategy() {
   - city: The target city and state.
   - reasoning: A brief explanation of why this is a high-opportunity target.`;
 
-  const response = await withRetry(() => ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          niche: { type: Type.STRING },
-          city: { type: Type.STRING },
-          reasoning: { type: Type.STRING }
+  const response = await withRetry(() =>
+    ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            niche: { type: Type.STRING },
+            city: { type: Type.STRING },
+            reasoning: { type: Type.STRING },
+          },
+          required: ['niche', 'city', 'reasoning'],
         },
-        required: ["niche", "city", "reasoning"]
-      }
-    }
-  }));
+      },
+    }),
+  );
 
   return JSON.parse(response.text);
 }

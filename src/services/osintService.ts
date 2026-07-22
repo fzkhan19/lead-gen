@@ -1,7 +1,7 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { withRetry } from "../lib/retry";
+import { GoogleGenAI, Type } from '@google/genai';
+import { withRetry } from '../lib/retry.ts';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: '' });
 
 export interface OSINTResult {
   socialMedia: {
@@ -26,7 +26,11 @@ export interface OSINTResult {
   summary: string;
 }
 
-export async function performOSINT(businessName: string, city: string, niche: string): Promise<OSINTResult> {
+export async function performOSINT(
+  businessName: string,
+  city: string,
+  niche: string,
+): Promise<OSINTResult> {
   const prompt = `Perform a deep OSINT (Open Source Intelligence) search for the following business:
   Name: ${businessName}
   Location: ${city}
@@ -43,64 +47,66 @@ export async function performOSINT(businessName: string, city: string, niche: st
 
   Provide a comprehensive summary of your findings.`;
 
-  const response = await withRetry(() => ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }],
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          socialMedia: {
-            type: Type.OBJECT,
-            properties: {
-              facebook: { type: Type.STRING },
-              instagram: { type: Type.STRING },
-              linkedin: { type: Type.STRING },
-              twitter: { type: Type.STRING },
-              youtube: { type: Type.STRING },
+  const response = await withRetry(() =>
+    ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            socialMedia: {
+              type: Type.OBJECT,
+              properties: {
+                facebook: { type: Type.STRING },
+                instagram: { type: Type.STRING },
+                linkedin: { type: Type.STRING },
+                twitter: { type: Type.STRING },
+                youtube: { type: Type.STRING },
+              },
             },
-          },
-          contactInfo: {
-            type: Type.OBJECT,
-            properties: {
-              emails: { type: Type.ARRAY, items: { type: Type.STRING } },
-              phones: { type: Type.ARRAY, items: { type: Type.STRING } },
-              ownerName: { type: Type.STRING },
+            contactInfo: {
+              type: Type.OBJECT,
+              properties: {
+                emails: { type: Type.ARRAY, items: { type: Type.STRING } },
+                phones: { type: Type.ARRAY, items: { type: Type.STRING } },
+                ownerName: { type: Type.STRING },
+              },
+              required: ['emails', 'phones'],
             },
-            required: ["emails", "phones"],
-          },
-          businessDetails: {
-            type: Type.OBJECT,
-            properties: {
-              website: { type: Type.STRING },
-              yearFounded: { type: Type.STRING },
-              employeeCount: { type: Type.STRING },
-              rating: { type: Type.NUMBER },
-              reviewCount: { type: Type.NUMBER },
+            businessDetails: {
+              type: Type.OBJECT,
+              properties: {
+                website: { type: Type.STRING },
+                yearFounded: { type: Type.STRING },
+                employeeCount: { type: Type.STRING },
+                rating: { type: Type.NUMBER },
+                reviewCount: { type: Type.NUMBER },
+              },
             },
+            summary: { type: Type.STRING },
           },
-          summary: { type: Type.STRING },
+          required: ['socialMedia', 'contactInfo', 'businessDetails', 'summary'],
         },
-        required: ["socialMedia", "contactInfo", "businessDetails", "summary"],
       },
-    },
-  }));
+    }),
+  );
 
   try {
     const parts = response.candidates?.[0]?.content?.parts || [];
-    const textParts = parts.filter(p => p.text).map(p => p.text);
+    const textParts = parts.filter((p) => p.text).map((p) => p.text);
     // Join all text parts, but filter out the system warning if it's present
-    const text = textParts
-      .filter(t => t && !t.includes("here are non-text parts toolCall"))
-      .join("\n") || "{}";
-    
+    const text =
+      textParts.filter((t) => t && !t.includes('here are non-text parts toolCall')).join('\n') ||
+      '{}';
+
     // Remove markdown code blocks if present
-    const cleanJson = text.replace(/```json\n?|```/g, "").trim();
+    const cleanJson = text.replace(/```json\n?|```/g, '').trim();
     return JSON.parse(cleanJson) as OSINTResult;
   } catch (e) {
-    console.error("Failed to parse OSINT response:", e, response.text);
-    throw new Error("OSINT data extraction failed. The AI response was not valid JSON.");
+    console.error('Failed to parse OSINT response:', e, response.text);
+    throw new Error('OSINT data extraction failed. The AI response was not valid JSON.');
   }
 }

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import WebsitePreview from './WebsitePreview';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import WebsitePreview from './WebsitePreview.tsx';
 
 // Mock motion/react
 vi.mock('motion/react', () => ({
@@ -16,23 +16,29 @@ describe('WebsitePreview', () => {
   const mockOnClose = vi.fn();
 
   it('renders the toolbar with business name', () => {
-    render(<WebsitePreview html={mockHtml} businessName={mockBusinessName} onClose={mockOnClose} />);
+    render(
+      <WebsitePreview html={mockHtml} businessName={mockBusinessName} onClose={mockOnClose} />,
+    );
     expect(screen.getByText(/Test Business - AI Mockup/i)).toBeInTheDocument();
   });
 
   it('calls onClose when the close button is clicked', () => {
-    render(<WebsitePreview html={mockHtml} businessName={mockBusinessName} onClose={mockOnClose} />);
+    render(
+      <WebsitePreview html={mockHtml} businessName={mockBusinessName} onClose={mockOnClose} />,
+    );
     const xButton = screen.getByRole('button', { name: /X/i });
     fireEvent.click(xButton);
     expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('changes view mode when clicking device icons', () => {
-    render(<WebsitePreview html={mockHtml} businessName={mockBusinessName} onClose={mockOnClose} />);
+    render(
+      <WebsitePreview html={mockHtml} businessName={mockBusinessName} onClose={mockOnClose} />,
+    );
     const monitorButton = screen.getByRole('button', { name: /Monitor/i });
     const tabletButton = screen.getByRole('button', { name: /Tablet/i });
     const smartphoneButton = screen.getByRole('button', { name: /Smartphone/i });
-    
+
     fireEvent.click(tabletButton);
     fireEvent.click(smartphoneButton);
     fireEvent.click(monitorButton);

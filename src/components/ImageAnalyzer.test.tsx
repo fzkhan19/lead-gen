@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ImageAnalyzer from './ImageAnalyzer';
-import { mockGenerateContent } from '../test/setup';
-import { addDoc } from 'firebase/firestore';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockGenerateContent } from '../test/setup.ts';
+import ImageAnalyzer from './ImageAnalyzer.tsx';
 
 // Mock motion/react
 vi.mock('motion/react', () => ({
@@ -41,19 +40,19 @@ describe('ImageAnalyzer', () => {
       Address: '123 Test St, Tampa, FL',
       PhoneNumber: '123-456-7890',
       Email: 'test@test.com',
-      Website: 'test.com'
+      Website: 'test.com',
     };
 
     mockGenerateContent.mockResolvedValue({
-      text: JSON.stringify(mockResult)
+      text: JSON.stringify(mockResult),
     });
 
     render(<ImageAnalyzer />);
-    
+
     // Simulate image upload
     const file = new File(['(⌐□_□)'], 'test.png', { type: 'image/png' });
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-    
+
     fireEvent.change(input, { target: { files: [file] } });
 
     // Wait for image preview to appear (FileReader is async)
@@ -65,8 +64,11 @@ describe('ImageAnalyzer', () => {
     const analyzeButton = screen.getByRole('button', { name: /Extract Lead Data/i });
     fireEvent.click(analyzeButton);
 
-    await waitFor(() => {
-      expect(mockGenerateContent).toHaveBeenCalled();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(mockGenerateContent).toHaveBeenCalled();
+      },
+      { timeout: 3000 },
+    );
   });
 });

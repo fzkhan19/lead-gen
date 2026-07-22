@@ -1,8 +1,8 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { doc, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebase";
+import { GoogleGenAI, Type } from '@google/genai';
+import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase.ts';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: '' });
 
 export interface Message {
   role: 'user' | 'lead';
@@ -37,10 +37,10 @@ export async function analyzeAndReply(lead: any, replyText: string) {
   `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: 'gemini-3-flash-preview',
     contents: prompt,
     config: {
-      responseMimeType: "application/json",
+      responseMimeType: 'application/json',
       responseSchema: {
         type: Type.OBJECT,
         properties: {
@@ -50,37 +50,37 @@ export async function analyzeAndReply(lead: any, replyText: string) {
             type: Type.OBJECT,
             properties: {
               setupPrice: { type: Type.NUMBER },
-              monthlyPrice: { type: Type.NUMBER }
+              monthlyPrice: { type: Type.NUMBER },
             },
-            nullable: true
-          }
+            nullable: true,
+          },
         },
-        required: ["sentiment", "responseText"]
-      }
-    }
+        required: ['sentiment', 'responseText'],
+      },
+    },
   });
 
   const result = JSON.parse(response.text);
 
   // Update Firestore
   const leadRef = doc(db, 'leads', lead.id);
-  
+
   const leadMessage: Message = {
     role: 'lead',
     content: replyText,
     timestamp: new Date().toISOString(),
-    sentiment: result.sentiment
+    sentiment: result.sentiment,
   };
 
   const aiMessage: Message = {
     role: 'user',
     content: result.responseText,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   const updates: any = {
     status: 'replied',
-    messages: arrayUnion(leadMessage, aiMessage)
+    messages: arrayUnion(leadMessage, aiMessage),
   };
 
   if (result.suggestedNewOffer) {
@@ -93,18 +93,18 @@ export async function analyzeAndReply(lead: any, replyText: string) {
   return result;
 }
 
-export async function simulateIncomingReply(leadId: string, businessName: string) {
+export async function simulateIncomingReply(_leadId: string, _businessName: string) {
   const replies = [
-    "This sounds interesting, but the setup fee is a bit high for us right now.",
-    "Can you show me more examples of your work?",
+    'This sounds interesting, but the setup fee is a bit high for us right now.',
+    'Can you show me more examples of your work?',
     "We already have a website, but it's old. What makes yours better?",
     "I'm interested, but I'm not sure if €300 is worth it for a small shop like mine.",
-    "How fast can you get this live?",
-    "Is the €10/mo fixed or will it increase?"
+    'How fast can you get this live?',
+    'Is the €10/mo fixed or will it increase?',
   ];
-  
+
   const randomReply = replies[Math.floor(Math.random() * replies.length)];
-  
+
   // In a real app, this would be an incoming webhook from an email provider.
   // Here we just trigger the analysis directly.
   return randomReply;

@@ -1,10 +1,10 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { withRetry } from "../lib/retry";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db, auth } from "../firebase";
-import { verifyEmailEligibility } from "./emailVerificationService";
+import { GoogleGenAI, Type } from '@google/genai';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase.ts';
+import { withRetry } from '../lib/retry.ts';
+import { verifyEmailEligibility } from './emailVerificationService.ts';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: '' });
 
 export async function performSearchRound(city: string, niche: string, round: number) {
   let prompt = '';
@@ -27,29 +27,31 @@ export async function performSearchRound(city: string, niche: string, round: num
        Return ONLY a JSON array of objects.`;
   }
 
-  const response = await withRetry(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }],
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            BusinessName: { type: Type.STRING },
-            Address: { type: Type.STRING },
-            PhoneNumber: { type: Type.STRING },
-            Website: { type: Type.STRING, nullable: true },
-            Email: { type: Type.STRING, nullable: true },
-            maps_url: { type: Type.STRING }
+  const response = await withRetry(() =>
+    ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              BusinessName: { type: Type.STRING },
+              Address: { type: Type.STRING },
+              PhoneNumber: { type: Type.STRING },
+              Website: { type: Type.STRING, nullable: true },
+              Email: { type: Type.STRING, nullable: true },
+              maps_url: { type: Type.STRING },
+            },
+            required: ['BusinessName', 'Address', 'PhoneNumber', 'maps_url'],
           },
-          required: ['BusinessName', 'Address', 'PhoneNumber', 'maps_url']
-        }
-      }
-    }
-  }));
+        },
+      },
+    }),
+  );
 
   try {
     return JSON.parse(response.text);
@@ -59,29 +61,39 @@ export async function performSearchRound(city: string, niche: string, round: num
   }
 }
 
-export async function runFullSearch(city: string, niche: string, onProgress?: (msg: string) => void) {
-  if (!auth.currentUser) throw new Error("Authentication required");
+export async function runFullSearch(
+  city: string,
+  niche: string,
+  onProgress?: (msg: string) => void,
+) {
+  if (!auth.currentUser) {
+    throw new Error('Authentication required');
+  }
 
-  onProgress?.(`[AI] Round 1: Broad market scan...`);
+  onProgress?.('[AI] Round 1: Broad market scan...');
   const results1 = await performSearchRound(city, niche, 1);
-  
-  onProgress?.(`[AI] Round 2: Deep neighborhood scan...`);
+
+  onProgress?.('[AI] Round 2: Deep neighborhood scan...');
   const results2 = await performSearchRound(city, niche, 2);
 
-  onProgress?.(`[AI] Round 3: Surrounding areas & outskirts...`);
+  onProgress?.('[AI] Round 3: Surrounding areas & outskirts...');
   const results3 = await performSearchRound(city, niche, 3);
-  
+
   const allResults = [...results1, ...results2, ...results3];
-  
+
   // Deduplicate by BusinessName
-  const uniqueResults = Array.from(new Map(allResults.map(item => [item.BusinessName, item])).values());
-  
+  const uniqueResults = Array.from(
+    new Map(allResults.map((item) => [item.BusinessName, item])).values(),
+  );
+
   onProgress?.(`[SYSTEM] Found ${uniqueResults.length} unique candidates. Filtering and saving...`);
 
   const savedLeads = [];
   for (const lead of uniqueResults) {
     // Discard if website exists
-    if (lead.Website || lead.website) continue;
+    if (lead.Website || lead.website) {
+      continue;
+    }
 
     const email = lead.Email || lead.email;
     if (email) {
@@ -103,7 +115,7 @@ export async function runFullSearch(city: string, niche: string, onProgress?: (m
       city,
       niche,
       status: 'qualified',
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     };
 
     const docRef = await addDoc(collection(db, 'leads'), leadData);

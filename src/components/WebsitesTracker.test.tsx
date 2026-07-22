@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import WebsitesTracker from './WebsitesTracker';
+import { describe, expect, it } from 'vitest';
+import WebsitesTracker from './WebsitesTracker.tsx';
 
 describe('WebsitesTracker', () => {
   it('renders websites overview', () => {
     render(<WebsitesTracker />);
-    expect(screen.getByText(/Generated Ecosystem/i)).toBeInTheDocument();
-    expect(screen.getByText(/Active Sites/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ecosystem Dashboard/i)).toBeInTheDocument();
+    expect(screen.getByText(/Active Deployed Assets/i)).toBeInTheDocument();
   });
 
   it('renders website cards', () => {

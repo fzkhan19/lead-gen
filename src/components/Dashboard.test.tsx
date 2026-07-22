@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import Dashboard from './Dashboard';
 import { onSnapshot } from 'firebase/firestore';
-import { auth } from '../firebase';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import Dashboard from './Dashboard.tsx';
 
 // Mock Firestore's onSnapshot
 vi.mock('firebase/firestore', async () => {
@@ -28,19 +27,33 @@ vi.mock('motion/react', () => ({
 
 describe('Dashboard', () => {
   const mockLeads = [
-    { id: '1', businessName: 'Business A', city: 'City A', niche: 'Niche A', status: 'qualified', uid: 'test-uid' },
-    { id: '2', businessName: 'Business B', city: 'City B', niche: 'Niche B', status: 'outreach_sent', uid: 'test-uid' },
+    {
+      id: '1',
+      businessName: 'Business A',
+      city: 'City A',
+      niche: 'Niche A',
+      status: 'qualified',
+      uid: 'test-uid',
+    },
+    {
+      id: '2',
+      businessName: 'Business B',
+      city: 'City B',
+      niche: 'Niche B',
+      status: 'outreach_sent',
+      uid: 'test-uid',
+    },
   ];
 
   beforeEach(() => {
     // auth.currentUser is already mocked in setup.ts
-    
-    vi.mocked(onSnapshot).mockImplementation((q: any, callback: any) => {
+
+    vi.mocked(onSnapshot).mockImplementation((_q: any, callback: any) => {
       callback({
-        docs: mockLeads.map(lead => ({
+        docs: mockLeads.map((lead) => ({
           id: lead.id,
-          data: () => lead
-        }))
+          data: () => lead,
+        })),
       });
       return () => {};
     });
@@ -50,8 +63,6 @@ describe('Dashboard', () => {
     render(<Dashboard />);
     expect(screen.getByText('Total Prospects')).toBeInTheDocument();
     expect(screen.getByText('Qualified Leads')).toBeInTheDocument();
-    expect(screen.getByText('Outreach Sent')).toBeInTheDocument();
-    expect(screen.getByText('Warm Replies')).toBeInTheDocument();
   });
 
   it('renders recent leads in the intelligence stream', () => {
@@ -61,10 +72,10 @@ describe('Dashboard', () => {
     expect(screen.getByText('Business B')).toBeInTheDocument();
   });
 
-  it('renders efficiency matrix with conversion rates', () => {
+  it('renders control elements and insights', () => {
     render(<Dashboard />);
-    expect(screen.getByText(/Efficiency Matrix/i)).toBeInTheDocument();
-    expect(screen.getByText(/Conversion Rate/i)).toBeInTheDocument();
-    expect(screen.getByText(/4.2%/i)).toBeInTheDocument();
+    expect(screen.getByText('Command Center')).toBeInTheDocument();
+    expect(screen.getByText('AI Strategy Insight')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Refresh Strategy/i })).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import Prospector from './Prospector';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import Prospector from './Prospector.tsx';
 
 // Mock motion/react
 vi.mock('motion/react', () => ({

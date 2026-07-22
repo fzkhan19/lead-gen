@@ -1,18 +1,43 @@
-import { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Loader2, Search, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from '@google/genai';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType } from '../firebase';
-import { cn } from '../lib/utils';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { CheckCircle2, Image as ImageIcon, Loader2, Search, Sparkles, Upload } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { auth, db, handleFirestoreError, OperationType } from '../firebase.ts';
+import { cn } from '../lib/utils.ts';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: '' });
 
 export default function ImageAnalyzer() {
   const [image, setImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<any | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [demoMode, setDemoMode] = useState(() => localStorage.getItem('demo_mode') === 'true');
+
+  useEffect(() => {
+    const handleDemoChange = (e: any) => {
+      if (e?.detail && typeof e.detail.enabled === 'boolean') {
+        setDemoMode(e.detail.enabled);
+      } else {
+        setDemoMode(localStorage.getItem('demo_mode') === 'true');
+      }
+    };
+    window.addEventListener('demoModeChanged', handleDemoChange);
+    return () => window.removeEventListener('demoModeChanged', handleDemoChange);
+  }, []);
+
+  const handleLoadDemoCard = () => {
+    setImage('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80');
+    setResult({
+      "Business Name": "L'Étoile Fine Bakery & Catering",
+      "Niche": "Artisan Bakery & Event Catering",
+      "Address": "24 Boulevard Saint-Germain, 75005 Paris, France",
+      "Phone Number": "+33 1 43 25 80 00",
+      "Email": "contact@letoile-bakery.fr",
+      "Website": "https://letoile-bakery.fr"
+    });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,27 +51,31 @@ export default function ImageAnalyzer() {
   };
 
   const analyzeImage = async () => {
-    if (!image) return;
+    if (!image) {
+      return;
+    }
 
     setIsAnalyzing(true);
     setResult(null);
 
     try {
       const base64Data = image.split(',')[1];
-      
+
       const response = await ai.models.generateContent({
         model: 'gemini-3.1-pro-preview',
         contents: [
           {
             parts: [
-              { text: "Analyze this image (business card, flyer, or storefront). Extract the following information in JSON format: Business Name, Niche, Address, Phone Number, Email, Website. If any field is missing, set it to null." },
-              { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
-            ]
-          }
+              {
+                text: 'Analyze this image (business card, flyer, or storefront). Extract the following information in JSON format: Business Name, Niche, Address, Phone Number, Email, Website. If any field is missing, set it to null.',
+              },
+              { inlineData: { data: base64Data, mimeType: 'image/jpeg' } },
+            ],
+          },
         ],
         config: {
-          responseMimeType: 'application/json'
-        }
+          responseMimeType: 'application/json',
+        },
       });
 
       const data = JSON.parse(response.text);
@@ -60,7 +89,9 @@ export default function ImageAnalyzer() {
   };
 
   const saveAsLead = async () => {
-    if (!result) return;
+    if (!result) {
+      return;
+    }
 
     try {
       const leadData = {
@@ -73,7 +104,7 @@ export default function ImageAnalyzer() {
         city: result.Address?.split(',').slice(-2, -1)[0]?.trim() || 'Unknown',
         niche: result.Niche || result.niche || 'Unknown',
         status: result.Website ? 'prospect' : 'qualified',
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       };
 
       try {
@@ -97,18 +128,24 @@ export default function ImageAnalyzer() {
             <ImageIcon className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h2 className="text-3xl font-display font-bold text-white tracking-tight">Visual Lead Extractor</h2>
-            <p className="text-brand-500 font-medium mt-1">Upload a business card or flyer to automatically extract lead data.</p>
+            <h2 className="text-3xl font-display font-bold text-white tracking-tight">
+              Visual Lead Extractor
+            </h2>
+            <p className="text-brand-500 font-medium mt-1">
+              Upload a business card or flyer to automatically extract lead data.
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="space-y-6">
-            <div 
+            <div
               onClick={() => fileInputRef.current?.click()}
               className={cn(
-                "aspect-video border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative group",
-                image ? "border-white/20" : "border-white/[0.05] hover:border-white/[0.1] hover:bg-white/[0.02]"
+                'aspect-video border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative group',
+                image
+                  ? 'border-white/20'
+                  : 'border-white/[0.05] hover:border-white/[0.1] hover:bg-white/[0.02]',
               )}
             >
               {image ? (
@@ -121,20 +158,35 @@ export default function ImageAnalyzer() {
               ) : (
                 <>
                   <Upload className="w-10 h-10 text-brand-800 mb-3" />
-                  <p className="text-brand-700 font-bold text-sm tracking-tight">Click to upload or drag and drop</p>
-                  <p className="text-[10px] text-brand-800 mt-2 font-mono uppercase tracking-widest">JPG, PNG up to 10MB</p>
+                  <p className="text-brand-700 font-bold text-sm tracking-tight">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-[10px] text-brand-800 mt-2 font-mono uppercase tracking-widest">
+                    JPG, PNG up to 10MB
+                  </p>
                 </>
               )}
             </div>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              className="hidden" 
-              accept="image/*" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*"
             />
-            
-            <button 
+
+            {demoMode && (
+              <button
+                type="button"
+                onClick={handleLoadDemoCard}
+                className="w-full btn-secondary py-3 rounded-2xl flex items-center justify-center gap-2 text-amber-400 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-xs font-bold transition-all"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                Load Sample Business Card (Demo)
+              </button>
+            )}
+
+            <button
               onClick={analyzeImage}
               disabled={!image || isAnalyzing}
               className="btn-lg btn-accent w-full"
@@ -154,20 +206,32 @@ export default function ImageAnalyzer() {
           </div>
 
           <div className="glass-dark border border-white/[0.03] rounded-3xl p-8 flex flex-col shadow-inner">
-            <h3 className="text-[10px] font-bold text-brand-600 uppercase tracking-[0.2em] mb-8">Extraction Results</h3>
-            
+            <h3 className="text-[10px] font-bold text-brand-600 uppercase tracking-[0.2em] mb-8">
+              Extraction Results
+            </h3>
+
             {result ? (
               <div className="flex-1 space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-brand-700 uppercase tracking-widest">Business Name</label>
-                  <p className="text-white font-bold text-lg tracking-tight">{result.BusinessName || result.name || 'Not found'}</p>
+                  <label className="text-[10px] font-bold text-brand-700 uppercase tracking-widest">
+                    Business Name
+                  </label>
+                  <p className="text-white font-bold text-lg tracking-tight">
+                    {result.BusinessName || result.name || 'Not found'}
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-brand-700 uppercase tracking-widest">Niche</label>
-                  <p className="text-brand-400 font-medium">{result.Niche || result.niche || 'Not found'}</p>
+                  <label className="text-[10px] font-bold text-brand-700 uppercase tracking-widest">
+                    Niche
+                  </label>
+                  <p className="text-brand-400 font-medium">
+                    {result.Niche || result.niche || 'Not found'}
+                  </p>
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-bold text-brand-700 uppercase tracking-widest">Contact Info</label>
+                  <label className="text-[10px] font-bold text-brand-700 uppercase tracking-widest">
+                    Contact Info
+                  </label>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 text-sm text-brand-500 font-medium">
                       <div className="w-8 h-8 bg-white/[0.02] rounded-lg flex items-center justify-center border border-white/[0.05]">
@@ -189,12 +253,9 @@ export default function ImageAnalyzer() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="pt-8 mt-auto border-t border-white/[0.02]">
-                  <button 
-                    onClick={saveAsLead}
-                    className="btn-lg btn-primary w-full"
-                  >
+                  <button onClick={saveAsLead} className="btn-lg btn-primary w-full">
                     <CheckCircle2 className="w-5 h-5" />
                     Save as Qualified Lead
                   </button>
@@ -205,7 +266,9 @@ export default function ImageAnalyzer() {
                 <div className="w-16 h-16 bg-white/[0.02] rounded-2xl flex items-center justify-center border border-white/[0.03]">
                   <Sparkles className="w-6 h-6 text-brand-800" />
                 </div>
-                <p className="text-brand-700 text-sm font-medium leading-relaxed">Upload an image and run analysis to see results here.</p>
+                <p className="text-brand-700 text-sm font-medium leading-relaxed">
+                  Upload an image and run analysis to see results here.
+                </p>
               </div>
             )}
           </div>

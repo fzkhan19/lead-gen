@@ -6,9 +6,13 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, delay =
     } catch (error: any) {
       lastError = error;
       // If it's a 429 (Rate Limit), wait and retry
-      if (error.message?.includes('429') || error.status === 429 || error.message?.includes('RESOURCE_EXHAUSTED')) {
+      if (
+        error.message?.includes('429') ||
+        error.status === 429 ||
+        error.message?.includes('RESOURCE_EXHAUSTED')
+      ) {
         console.warn(`Rate limit hit. Retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, delay * (i + 1))); // Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, delay * (i + 1))); // Exponential backoff
         continue;
       }
       // If it's another error, throw immediately

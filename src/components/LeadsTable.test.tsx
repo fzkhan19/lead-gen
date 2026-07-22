@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import LeadsTable from './LeadsTable';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { onSnapshot } from 'firebase/firestore';
-import { performOSINT } from '../services/osintService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { performOSINT } from '../services/osintService.ts';
+import LeadsTable from './LeadsTable.tsx';
 
 // Mock osintService
 vi.mock('../services/osintService', () => ({
@@ -10,8 +10,8 @@ vi.mock('../services/osintService', () => ({
     socialMedia: { facebook: 'fb.com/test' },
     contactInfo: { emails: ['test@test.com'] },
     businessDetails: { website: 'test.com' },
-    summary: 'Test summary'
-  })
+    summary: 'Test summary',
+  }),
 }));
 
 // Mock Firestore's onSnapshot
@@ -50,7 +50,7 @@ describe('LeadsTable', () => {
       niche: 'Plumbing',
       status: 'qualified',
       createdAt: { toDate: () => new Date() },
-      uid: 'test-uid'
+      uid: 'test-uid',
     },
     {
       id: '2',
@@ -59,17 +59,17 @@ describe('LeadsTable', () => {
       niche: 'Roofing',
       status: 'outreach_sent',
       createdAt: { toDate: () => new Date() },
-      uid: 'test-uid'
-    }
+      uid: 'test-uid',
+    },
   ];
 
   beforeEach(() => {
-    vi.mocked(onSnapshot).mockImplementation((q: any, callback: any) => {
+    vi.mocked(onSnapshot).mockImplementation((_q: any, callback: any) => {
       callback({
-        docs: mockLeads.map(lead => ({
+        docs: mockLeads.map((lead) => ({
           id: lead.id,
-          data: () => lead
-        }))
+          data: () => lead,
+        })),
       });
       return () => {};
     });
@@ -84,9 +84,9 @@ describe('LeadsTable', () => {
   it('filters leads by search query', () => {
     render(<LeadsTable />);
     const searchInput = screen.getByPlaceholderText(/Search Intelligence.../i);
-    
+
     fireEvent.change(searchInput, { target: { value: 'Tampa' } });
-    
+
     expect(screen.getByText('Test Business 1')).toBeInTheDocument();
     expect(screen.queryByText('Another Business')).not.toBeInTheDocument();
   });
@@ -95,7 +95,7 @@ describe('LeadsTable', () => {
     render(<LeadsTable />);
     const viewButton = screen.getAllByTitle(/View Entity Profile/i)[0];
     fireEvent.click(viewButton);
-    
+
     expect(screen.getByText(/Contact Matrix/i)).toBeInTheDocument();
   });
 
@@ -103,7 +103,7 @@ describe('LeadsTable', () => {
     render(<LeadsTable />);
     const enrichButton = screen.getAllByTitle(/Enrich Data/i)[0];
     fireEvent.click(enrichButton);
-    
+
     await waitFor(() => {
       expect(performOSINT).toHaveBeenCalled();
     });
